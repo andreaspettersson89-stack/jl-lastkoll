@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d2024">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lastkollen">
+<title>Lastkollen – Haki</title>
+<link rel="icon" href="ikon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="ikon-180.png">
+<style>
+  :root {
+    --bg: #f1f0ec; --kort: #fff; --text: #1d2024; --svag: #5f646b; --linje: #dcdad4;
+    --mork: #1d2024; --accent: #f08a1c; --accent-mork: #b85f00;
+    --gron: #1f8a4c; --gul: #c98a00; --rod: #c62828;
+    --gron-bg: #e5f4ea; --gul-bg: #fdf3d8; --rod-bg: #fde8e8;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  header { background: var(--mork); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 14px; display: flex; align-items: baseline; gap: 10px; }
+  header h1 { margin: 0; font-size: 22px; letter-spacing: .2px; }
+  header h1 span { color: var(--accent); }
+  header small { color: #b9bdc2; font-size: 13px; }
+  main { max-width: 640px; margin: 0 auto; padding: 12px; }
+  .kort { background: var(--kort); border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .kort h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .6px; color: var(--svag); margin: 0 0 10px; }
+  label.falt { display: block; font-size: 14px; color: var(--svag); margin: 10px 0 4px; }
+  .rad { display: flex; gap: 8px; align-items: center; }
+  select, input[type=text], input[type=number] { font: inherit; width: 100%; padding: 11px 12px; border: 1px solid var(--linje); border-radius: 10px; background: #fff; color: var(--text); min-height: 46px; }
+  select { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--svag) 50%), linear-gradient(135deg, var(--svag) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 34px; }
+  button { font: inherit; cursor: pointer; border: 0; border-radius: 10px; min-height: 46px; padding: 0 14px; }
+  .knapp { background: var(--mork); color: #fff; font-weight: 600; }
+  .knapp-ljus { background: #ecebe6; color: var(--text); font-weight: 600; white-space: nowrap; }
+  .knapp-accent { background: var(--accent); color: #1d2024; font-weight: 700; }
+  .knapp-rod { background: var(--rod-bg); color: var(--rod); font-weight: 600; }
+  .segment { display: flex; background: #ecebe6; border-radius: 12px; padding: 4px; gap: 4px; }
+  .segment button { flex: 1; background: transparent; font-weight: 600; color: var(--svag); min-height: 40px; }
+  .segment button.vald { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .segment button:disabled { opacity: .4; }
+  .hint { font-size: 13px; color: var(--svag); margin: 6px 0 0; }
+  .varning { background: var(--gul-bg); color: #6b4a00; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 10px; }
+  .varning.rod { background: var(--rod-bg); color: #8e1c1c; }
+  .varning.gron { background: var(--gron-bg); color: #145c33; }
+  .varning button { margin-top: 8px; min-height: 40px; }
+
+  /* resultat */
+  .stapel { margin: 12px 0; }
+  .stapel-topp { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+  .stapel-topp b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stapel-spar { height: 12px; background: #ecebe6; border-radius: 6px; overflow: hidden; margin: 6px 0 3px; }
+  .stapel-fyll { height: 100%; border-radius: 6px; transition: width .2s; }
+  .ok .stapel-fyll { background: var(--gron); } .nara .stapel-fyll { background: var(--gul); } .over .stapel-fyll { background: var(--rod); }
+  .stapel-under { font-size: 13px; color: var(--svag); }
+  .over .stapel-under { color: var(--rod); font-weight: 600; }
+  .kvar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .kvar div { background: #f6f5f2; border-radius: 10px; padding: 10px; }
+  .kvar small { display: block; color: var(--svag); font-size: 13px; }
+  .kvar b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .kvar .minus b { color: var(--rod); }
+
+  /* delar */
+  .sok-rad { display: flex; gap: 8px; margin: 10px 0 4px; }
+  .sok-rad input { flex: 1; }
+  .stjarnfilter { white-space: nowrap; }
+  .stjarnfilter.pa { background: var(--accent); color: #1d2024; }
+  details.grupp { border-top: 1px solid var(--linje); }
+  details.grupp summary { list-style: none; padding: 14px 2px; font-weight: 700; display: flex; justify-content: space-between; cursor: pointer; }
+  details.grupp summary::-webkit-details-marker { display: none; }
+  details.grupp summary::after { content: "+"; color: var(--svag); font-weight: 400; font-size: 20px; line-height: 1; }
+  details.grupp[open] summary::after { content: "–"; }
+  .grupp-antal { color: var(--accent-mork); font-weight: 600; margin-left: auto; margin-right: 10px; font-size: 14px; }
+  .del { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 6px; padding: 8px 0; border-top: 1px solid #f0efeb; }
+  .del.har { background: linear-gradient(90deg, #fff6ea, transparent 70%); }
+  .stjarna { background: none; min-height: 40px; padding: 0; font-size: 22px; color: #c9c6be; }
+  .stjarna.pa { color: var(--accent); }
+  .del-namn { font-size: 15px; line-height: 1.25; }
+  .del-namn small { display: block; color: var(--svag); font-size: 12.5px; }
+  .del-namn .ryms { color: var(--gron); }
+  .del-namn .ryms.slut { color: var(--rod); }
+  .stegare { display: flex; align-items: center; gap: 4px; }
+  .stegare button { width: 42px; min-height: 42px; padding: 0; font-size: 22px; background: #ecebe6; font-weight: 600; }
+  .stegare input { width: 58px; min-height: 42px; padding: 6px 4px; text-align: center; font-variant-numeric: tabular-nums; }
+  .tom-lista { color: var(--svag); padding: 14px 2px; font-size: 14px; }
+  .lastat-rad { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; font-size: 15px; }
+
+  /* fast list längst ner */
+  .botten { position: fixed; left: 0; right: 0; bottom: 0; background: var(--mork); color: #fff; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; justify-content: center; z-index: 5; }
+  .chip { flex: 1; max-width: 300px; border-radius: 10px; padding: 7px 10px; background: #2c3036; font-size: 13px; line-height: 1.25; }
+  .chip b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .chip.ok { box-shadow: inset 4px 0 0 var(--gron); } .chip.nara { box-shadow: inset 4px 0 0 var(--gul); } .chip.over { box-shadow: inset 4px 0 0 var(--rod); background: #4a2222; }
+
+  /* dialog */
+  dialog { border: 0; border-radius: 16px; padding: 0; width: min(560px, calc(100vw - 20px)); max-height: calc(100vh - 30px); }
+  dialog::backdrop { background: rgba(20,22,25,.55); }
+  .dialog-inne { padding: 16px; }
+  dialog h3 { margin: 0 0 4px; font-size: 20px; }
+  .tva { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .dialog-knappar { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .dialog-knappar .knapp { flex: 1; }
+  .kryss { display: flex; gap: 10px; align-items: center; margin-top: 12px; font-size: 15px; }
+  .kryss input { width: 22px; height: 22px; }
+  footer { max-width: 640px; margin: 0 auto; padding: 4px 16px 20px; color: var(--svag); font-size: 13px; }
+  footer p { margin: 6px 0; }
+  a { color: var(--accent-mork); }
+</style>
+</head>
+<body>
+<header><h1>Last<span>kollen</span></h1><small>HAKI Universal</small></header>
+
+<main>
+  <section class="kort" aria-labelledby="h-ekipage">
+    <h2 id="h-ekipage">Ekipage</h2>
+    <label class="falt" for="valBil">Bil</label>
+    <div class="rad"><select id="valBil"></select><button class="knapp-ljus" id="andraBil" type="button">Ändra</button></div>
+    <label class="falt" for="valSlap">Släp</label>
+    <div class="rad"><select id="valSlap"></select><button class="knapp-ljus" id="andraSlap" type="button">Ändra</button></div>
+    <label class="falt">Körkort</label>
+    <div class="segment" id="valKorkort" role="group" aria-label="Körkort">
+      <button type="button" data-v="B">B</button><button type="button" data-v="B96">B96</button><button type="button" data-v="BE">BE</button>
+    </div>
+    <label class="falt" for="ovrigt">Övrigt i bilen, kg</label>
+    <input id="ovrigt" type="number" inputmode="numeric" min="0" placeholder="0">
+    <p class="hint">Passagerare och verktyg. Föraren ingår redan i bilens tjänstevikt.</p>
+  </section>
+
+  <section class="kort" aria-labelledby="h-resultat">
+    <h2 id="h-resultat">Får jag köra?</h2>
+    <div id="resultat"></div>
+  </section>
+
+  <section class="kort" aria-labelledby="h-lasta">
+    <h2 id="h-lasta">Lasta</h2>
+    <div class="segment" id="valZon" role="group" aria-label="Var lastar du">
+      <button type="button" data-v="flak">På flaket / i bilen</button><button type="button" data-v="slap">På släpet</button>
+    </div>
+    <div class="sok-rad">
+      <input id="sok" type="text" placeholder="Sök: spira, 3050, krokplan…" autocomplete="off" enterkeyhint="search">
+      <button class="knapp-ljus stjarnfilter" id="baraStjarnor" type="button" aria-pressed="false">★ Mina</button>
+    </div>
+    <div id="delar"></div>
+    <div class="lastat-rad"><span id="lastatText"></span><button class="knapp-rod" id="tom" type="button">Töm</button></div>
+  </section>
+</main>
+
+<footer>
+  <p><b>Vad appen räknar:</b> vikter mot bilens och släpets registrerade gränser och mot körkortet. Den räknar <b>inte</b> om lasten ryms, hur den är fördelad (kultrycket) eller hur den är surrad. Föraren ansvarar alltid för lasten.</p>
+  <p>Kultrycket, alltså släpets tyngd på dragkroken, belastar också bilen. Vill du ha marginal kan du lägga några tiotal kilo extra i "Övrigt i bilen".</p>
+  <p id="kalla"></p>
+  <p>Allt du skriver in sparas bara i den här telefonen.</p>
+</footer>
+
+<div class="botten" id="botten"></div>
+
+<dialog id="dlgBil">
+  <form method="dialog" class="dialog-inne" id="formBil">
+    <h3 id="dlgBilRubrik">Bil</h3>
+    <p class="hint">Siffrorna står på registreringsbeviset del 1. Du kan också söka på regnumret hos Transportstyrelsen: <a href="https://www.transportstyrelsen.se/sv/vagtrafik/fordon/fordons-agaruppgift/sok-fordons-och-agaruppgifter/" target="_blank" rel="noopener">Sök fordonsuppgifter</a> eller <a href="https://www.transportstyrelsen.se/sv/vagtrafik/e-tjanster-och-blanketter/e-tjanster-inom-vagtrafik/fordon/slapvagnskalkylator/" target="_blank" rel="noopener">Släpvagnskalkylatorn</a>.</p>
+    <div class="tva">
+      <div><label class="falt" for="bNamn">Namn</label><input id="bNamn" type="text" placeholder="t.ex. L200"></div>
+      <div><label class="falt" for="bReg">Regnr</label><input id="bReg" type="text" autocapitalize="characters"></div>
+      <div><label class="falt" for="bTj">Tjänstevikt, kg</label><input id="bTj" type="number" inputmode="numeric"></div>
+      <div><label class="falt" for="bTot">Totalvikt, kg</label><input id="bTot" type="number" inputmode="numeric"></div>
+      <div><label class="falt" for="bSB">Max släp bromsat, kg</label><input id="bSB" type="number" inputmode="numeric"></div>
+      <div><label class="falt" for="bSO">Max släp obromsat, kg</label><input id="bSO" type="number" inputmode="numeric"></div>
+    </div>
+    <label class="falt" for="bTag">Tågvikt, kg (bil + släp, om den står)</label>
+    <input id="bTag" type="number" inputmode="numeric" placeholder="Kan lämnas tom">
+    <div class="dialog-knappar">
+      <button class="knapp" value="spara" type="submit">Spara</button>
+      <button class="knapp-ljus" value="avbryt" type="submit" formnovalidate>Avbryt</button>
+      <button class="knapp-rod" id="bTaBort" value="tabort" type="submit" formnovalidate>Ta bort</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgSlap">
+  <form method="dialog" class="dialog-inne" id="formSlap">
+    <h3 id="dlgSlapRubrik">Släp</h3>
+    <p class="hint">Siffrorna står på släpets registreringsbevis. Du kan också söka på regnumret hos Transportstyrelsen: <a href="https://www.transportstyrelsen.se/sv/vagtrafik/fordon/fordons-agaruppgift/sok-fordons-och-agaruppgifter/" target="_blank" rel="noopener">Sök fordonsuppgifter</a> eller <a href="https://www.transportstyrelsen.se/sv/vagtrafik/e-tjanster-och-blanketter/e-tjanster-inom-vagtrafik/fordon/slapvagnskalkylator/" target="_blank" rel="noopener">Släpvagnskalkylatorn</a>.</p>
+    <div class="tva">
+      <div><label class="falt" for="sNamn">Namn</label><input id="sNamn" type="text" placeholder="t.ex. Stora släpet"></div>
+      <div><label class="falt" for="sReg">Regnr</label><input id="sReg" type="text" autocapitalize="characters"></div>
+      <div><label class="falt" for="sTj">Tjänstevikt, kg</label><input id="sTj" type="number" inputmode="numeric"></div>
+      <div><label class="falt" for="sTot">Totalvikt, kg</label><input id="sTot" type="number" inputmode="numeric"></div>
+    </div>
+    <label class="kryss"><input id="sBroms" type="checkbox" checked> Släpet har bromsar</label>
+    <div class="dialog-knappar">
+      <button class="knapp" value="spara" type="submit">Spara</button>
+      <button class="knapp-ljus" value="avbryt" type="submit" formnovalidate>Avbryt</button>
+      <button class="knapp-rod" id="sTaBort" value="tabort" type="submit" formnovalidate>Ta bort</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="haki-data.js"></script>
+<script src="calc.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
