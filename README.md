@@ -1,4 +1,4 @@
-# Lastkollen
+# JL Lastkoll
 
 Mobilsida för en ställningsfirma: välj bil, släp och körkort, fyll i hur många HAKI Universal-delar
 som lastas, och se om ekipaget håller sig inom vikterna.
