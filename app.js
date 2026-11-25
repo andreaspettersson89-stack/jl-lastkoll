@@ -5,29 +5,52 @@
   var $ = function (id) { return document.getElementById(id); };
 
   // ---------- delarna ----------
+  // Två märken. Haki-delarnas id är oförändrade (det som redan är sparat i telefonen gäller),
+  // Layher-delarna får prefixet "L:" så att ett art.nr aldrig kan krocka mellan märkena.
+  var MARKEN = [
+    { id: "haki", namn: "Haki", system: "HAKI Universal", kalla: window.HAKI_KALLA, grupper: window.HAKI_GRUPPER, block: window.HAKI_BLOCK, prefix: "" },
+    { id: "layher", namn: "Layher", system: "Layher Allround", kalla: window.LAYHER_KALLA, grupper: window.LAYHER_GRUPPER, block: window.LAYHER_BLOCK, prefix: "L:" }
+  ];
   var DELAR = [];
-  window.HAKI_BLOCK.forEach(function (b) {
-    b[4].forEach(function (storlek, i) {
-      DELAR.push({
-        id: b[0] + "|" + b[5][i], grupp: b[1], namn: b[2], beskr: b[3], storlek: storlek,
-        art: b[5][i], kg: Number(b[6][i].replace(",", "."))
+  MARKEN.forEach(function (m) {
+    m.antal = 0;
+    m.block.forEach(function (b) {
+      b[4].forEach(function (storlek, i) {
+        DELAR.push({
+          id: m.prefix + b[0] + "|" + b[5][i], marke: m.id, grupp: b[1], namn: b[2], beskr: b[3], storlek: storlek,
+          art: b[5][i], kg: Number(b[6][i].replace(",", "."))
+        });
+        m.antal++;
       });
     });
   });
+  function marke() { return MARKEN.find(function (m) { return m.id === S.marke; }) || MARKEN[0]; }
   var DEL_PER_ID = {};
   DELAR.forEach(function (d) { DEL_PER_ID[d.id] = d; });
+  // Beskrivningen visas bara när två delar av samma märke annars ser likadana ut (samma namn och storlek).
+  var lika = {};
+  DELAR.forEach(function (d) { var k = d.marke + "|" + d.namn + "|" + d.storlek; lika[k] = (lika[k] || 0) + 1; });
+  DELAR.forEach(function (d) { d.visaBeskr = !!d.beskr && lika[d.marke + "|" + d.namn + "|" + d.storlek] > 1; });
+  // Ett sökord som börjar med en siffra ska träffa från början av ett tal: "3.07" träffar 3.07 m men inte art.nr 3883.073.
+  function traffar(hay, o) {
+    if (!/^\d/.test(o)) return hay.indexOf(o) >= 0;
+    var i = hay.indexOf(o);
+    while (i >= 0) { if (i === 0 || !/[\d.,]/.test(hay.charAt(i - 1))) return true; i = hay.indexOf(o, i + 1); }
+    return false;
+  }
 
   // ---------- läget, sparas i telefonen ----------
   var STANDARD = {
     bilar: [{ id: "b1", namn: "Mitsubishi L200", regnr: "", tjanstevikt: "", totalvikt: "", slapBromsad: "", slapObromsad: "", tagvikt: "" }],
     slapar: [], valdBil: "b1", valtSlap: "", behorighet: "B", ovrigt: "",
-    zon: "flak", antal: { flak: {}, slap: {} }, favoriter: {}, baraFavoriter: false
+    zon: "flak", antal: { flak: {}, slap: {} }, favoriter: {}, baraFavoriter: false, marke: "haki"
   };
   var S;
   try { S = JSON.parse(localStorage.getItem(NYCKEL)) || null; } catch (e) { S = null; }
   if (!S || !S.bilar) S = JSON.parse(JSON.stringify(STANDARD));
   S.antal = S.antal || { flak: {}, slap: {} }; S.antal.flak = S.antal.flak || {}; S.antal.slap = S.antal.slap || {};
   S.favoriter = S.favoriter || {};
+  if (S.marke !== "layher") S.marke = "haki";
   function spara() { try { localStorage.setItem(NYCKEL, JSON.stringify(S)); } catch (e) { /* privat läge: räknar ändå */ } }
 
   function bil() { return S.bilar.find(function (b) { return b.id === S.valdBil; }) || S.bilar[0] || null; }
@@ -204,13 +227,15 @@
     var ord = q.split(/\s+/).filter(Boolean);
     var antalZon = S.antal[S.zon];
     var visade = 0;
-    window.HAKI_GRUPPER.forEach(function (gnamn, gi) {
+    var m = marke();
+    $("sok").placeholder = m.id === "layher" ? "Sök: standard, 3.07, deck…" : "Sök: spira, 3050, krokplan…";
+    m.grupper.forEach(function (gnamn, gi) {
       var lista = DELAR.filter(function (d) {
-        if (d.grupp !== gi) return false;
+        if (d.marke !== m.id || d.grupp !== gi) return false;
         if (S.baraFavoriter && !S.favoriter[d.id] && !(antalZon[d.id] > 0)) return false;
         if (!ord.length) return true;
         var hay = (gnamn + " " + d.namn + " " + d.beskr + " " + d.storlek + " " + d.art).toLowerCase();
-        return ord.every(function (o) { return hay.indexOf(o) >= 0; });
+        return ord.every(function (o) { return traffar(hay, o); });
       });
       if (!lista.length) return;
       visade += lista.length;
@@ -226,6 +251,8 @@
         stj.onclick = function () { if (S.favoriter[d.id]) delete S.favoriter[d.id]; else S.favoriter[d.id] = true; stj.classList.toggle("pa"); spara(); };
         var namn = el("div", "del-namn");
         namn.appendChild(document.createTextNode(d.namn + (d.storlek !== "–" ? " " + d.storlek : "")));
+        // T.ex. Layher Standard LW 3.00 m med och utan tapp: katalogens beskrivning skiljer dem åt.
+        if (d.visaBeskr) namn.appendChild(el("span", "del-beskr", d.beskr));
         var info = el("small");
         info.appendChild(document.createTextNode(kgDec(d.kg) + " st · art " + d.art + " · "));
         var ryms = el("span", "ryms"); info.appendChild(ryms);
@@ -251,13 +278,18 @@
       });
       box.appendChild(det);
     });
-    if (!visade) box.appendChild(el("div", "tom-lista", S.baraFavoriter ? "Inga stjärnmärkta delar än. Tryck på ★ vid de delar du brukar lasta." : "Inga delar matchar sökningen."));
+    if (!visade) box.appendChild(el("div", "tom-lista", S.baraFavoriter ? "Inga stjärnmärkta " + m.namn + "-delar än. Tryck på ★ vid de delar du brukar lasta." : "Inga " + m.namn + "-delar matchar sökningen."));
+    Array.prototype.forEach.call($("valMarke").children, function (b) { b.classList.toggle("vald", b.dataset.v === m.id); });
     $("baraStjarnor").classList.toggle("pa", S.baraFavoriter);
     $("baraStjarnor").setAttribute("aria-pressed", String(S.baraFavoriter));
     uppdatera();
   }
 
   $("sok").addEventListener("input", ritaDelar);
+  $("valMarke").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button"); if (!b || b.dataset.v === S.marke) return;
+    S.marke = b.dataset.v; spara(); ritaDelar();
+  });
   $("baraStjarnor").addEventListener("click", function () { S.baraFavoriter = !S.baraFavoriter; spara(); ritaDelar(); });
   $("tom").addEventListener("click", function () {
     var namn = S.zon === "slap" ? "släpet" : "flaket";
@@ -284,10 +316,17 @@
     Object.keys(radRefs).forEach(function (id) { var ref = radRefs[id]; ref.grupp.textContent = perGrupp[ref.gi] ? perGrupp[ref.gi] + " st" : ""; });
     var s = summa(S.zon);
     $("lastatText").textContent = (S.zon === "slap" ? "På släpet: " : "På flaket: ") + s.st + " delar, " + kg(s.kg);
+    // Antal per märke på flikarna, så att det syns när lasset blandar Haki och Layher.
+    MARKEN.forEach(function (m) {
+      var n = 0;
+      Object.keys(antalZon).forEach(function (id) { var d = DEL_PER_ID[id]; if (d && d.marke === m.id) n += antalZon[id]; });
+      var b = $("valMarke").querySelector('[data-v="' + m.id + '"] small');
+      if (b) b.textContent = n ? n + " st" : "";
+    });
   }
 
   function allt() { ritaVal(); uppdatera(); }
 
-  $("kalla").textContent = "Vikterna kommer från " + window.HAKI_KALLA + ". " + DELAR.length + " delar.";
+  $("kalla").textContent = "Vikterna kommer från " + MARKEN.map(function (m) { return m.kalla + " (" + m.antal + " delar)"; }).join(" och ") + ". Layher-delarna har katalogens engelska namn.";
   allt(); ritaDelar();
 })();

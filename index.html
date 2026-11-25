@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1d2024">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="JL Lastkoll">
-<title>JL Lastkoll – Haki</title>
+<title>JL Lastkoll – Haki och Layher</title>
 <link rel="icon" href="ikon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="ikon-180.png">
 <style>
@@ -39,6 +39,8 @@
   .segment button { flex: 1; background: transparent; font-weight: 600; color: var(--svag); min-height: 40px; }
   .segment button.vald { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
   .segment button:disabled { opacity: .4; }
+  .segment.marke { margin-top: 10px; }
+  .segment.marke small { font-weight: 600; color: var(--accent-mork); margin-left: 4px; }
   .hint { font-size: 13px; color: var(--svag); margin: 6px 0 0; }
   .varning { background: var(--gul-bg); color: #6b4a00; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 10px; }
   .varning.rod { background: var(--rod-bg); color: #8e1c1c; }
@@ -77,6 +79,7 @@
   .stjarna.pa { color: var(--accent); }
   .del-namn { font-size: 15px; line-height: 1.25; }
   .del-namn small { display: block; color: var(--svag); font-size: 12.5px; }
+  .del-namn .del-beskr { display: block; color: var(--svag); font-size: 12.5px; font-style: italic; }
   .del-namn .ryms { color: var(--gron); }
   .del-namn .ryms.slut { color: var(--rod); }
   .stegare { display: flex; align-items: center; gap: 4px; }
@@ -107,7 +110,7 @@
 </style>
 </head>
 <body>
-<header><h1>JL Last<span>koll</span></h1><small>HAKI Universal</small></header>
+<header><h1>JL Last<span>koll</span></h1><small>HAKI Universal · Layher Allround</small></header>
 
 <main>
   <section class="kort" aria-labelledby="h-ekipage">
@@ -134,6 +137,9 @@
     <h2 id="h-lasta">Lasta</h2>
     <div class="segment" id="valZon" role="group" aria-label="Var lastar du">
       <button type="button" data-v="flak">På flaket / i bilen</button><button type="button" data-v="slap">På släpet</button>
+    </div>
+    <div class="segment marke" id="valMarke" role="group" aria-label="Märke">
+      <button type="button" data-v="haki">Haki <small></small></button><button type="button" data-v="layher">Layher <small></small></button>
     </div>
     <div class="sok-rad">
       <input id="sok" type="text" placeholder="Sök: spira, 3050, krokplan…" autocomplete="off" enterkeyhint="search">
@@ -195,6 +201,7 @@
 </dialog>
 
 <script src="haki-data.js"></script>
+<script src="layher-data.js"></script>
 <script src="calc.js"></script>
 <script src="app.js"></script>
 </body>
